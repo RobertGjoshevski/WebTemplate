@@ -1,6 +1,9 @@
 backend:
   name: git-gateway
   branch: main # Branch to update (optional; defaults to master)
+  # IMPORTANT: Replace with your actual Netlify site URL
+  # Example: https://your-site-name.netlify.app
+  # site_url: https://YOUR_NETLIFY_SITE.netlify.app
 
 # Enable local backend for development (no authentication required)
 # Comment out local_backend for production deployment
