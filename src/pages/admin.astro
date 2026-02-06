@@ -1,7 +1,9 @@
 ---
 // Admin panel page that loads Decap CMS
 const netlifySiteUrl = 'https://serene-rugelach-9ae7b9.netlify.app';
+const identityApiUrl = `${netlifySiteUrl}/.netlify/identity`;
 const base = import.meta.env.BASE_URL;
+const adminUrl = `${base}/admin/`;
 ---
 
 <!DOCTYPE html>
@@ -9,141 +11,59 @@ const base = import.meta.env.BASE_URL;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
     <title>Content Manager</title>
-    <!-- Netlify Identity widget - load from CDN to avoid CORS issues -->
+    <!-- Netlify Identity Widget from CDN - must use is:inline so Astro doesn't bundle it -->
     <script is:inline src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <script is:inline>
-      // Initialize Netlify Identity immediately when script loads
-      // This must happen BEFORE Decap CMS loads to prevent errors
-      (function() {
-        function initIdentity() {
-          if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
-            window.netlifyIdentity.init({
-              APIUrl: '${netlifySiteUrl}/.netlify/identity'
-            });
-            console.log('Netlify Identity initialized in head');
-          } else {
-            setTimeout(initIdentity, 50);
-          }
+    <!-- Initialize Identity BEFORE Decap CMS loads (Decap calls currentUser() on init) -->
+    <script is:inline define:vars={{ identityApiUrl }}>
+      (function waitAndInit() {
+        if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
+          window.netlifyIdentity.init({ APIUrl: identityApiUrl });
+        } else {
+          setTimeout(waitAndInit, 50);
         }
-        initIdentity();
       })();
     </script>
   </head>
   <body>
-    <!-- Include the script that builds the page and powers Decap CMS -->
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-    <script is:inline>
-      // Handle invite and recovery tokens from Netlify Identity
-      // Handle both #invite_token=... and #/invite_token=... formats
-      const hash = window.location.hash;
-      
-      // Extract invite token (handle both #invite_token= and #/invite_token=)
-      let inviteToken = null;
-      if (hash.includes('invite_token=')) {
-        const parts = hash.split('invite_token=');
-        if (parts.length > 1) {
-          inviteToken = parts[1].split('&')[0].split('#')[0]; // Get token, remove any trailing hash or params
+    <!-- Decap CMS - must use is:inline so Astro doesn't bundle it -->
+    <script is:inline src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- Handle invite/recovery tokens and login redirect -->
+    <script is:inline define:vars={{ identityApiUrl, adminUrl }}>
+      var hash = window.location.hash;
+      var hasInvite = hash.includes('invite_token=');
+      var hasRecovery = hash.includes('recovery_token=');
+
+      function waitForIdentity(cb) {
+        if (window.netlifyIdentity && typeof window.netlifyIdentity.open === 'function') {
+          cb();
+        } else {
+          setTimeout(function() { waitForIdentity(cb); }, 100);
         }
       }
-      
-      // Extract recovery token
-      let recoveryToken = null;
-      if (hash.includes('recovery_token=')) {
-        const parts = hash.split('recovery_token=');
-        if (parts.length > 1) {
-          recoveryToken = parts[1].split('&')[0].split('#')[0];
-        }
-      }
-      
-      const adminUrl = '{base}/admin/';
-      
-      console.log('Hash:', hash);
-      console.log('Invite token:', inviteToken);
-      console.log('Recovery token:', recoveryToken);
-      
-      // Wait for Netlify Identity to load and initialize
-      let attempts = 0;
-      const maxAttempts = 50; // 5 seconds max wait
-      
-      function handleIdentity() {
-        attempts++;
-        
-        // Check if Identity widget is loaded (has the open method)
-        if (!window.netlifyIdentity || typeof window.netlifyIdentity.open !== 'function') {
-          if (attempts < maxAttempts) {
-            console.log('Waiting for Netlify Identity...', attempts);
-            setTimeout(handleIdentity, 100);
-            return;
-          } else {
-            console.error('Netlify Identity failed to load after', attempts, 'attempts');
-            alert('Failed to load authentication. Please refresh the page.');
-            return;
+
+      if (hasInvite || hasRecovery) {
+        waitForIdentity(function() {
+          // Ensure Identity is initialized
+          if (typeof window.netlifyIdentity.init === 'function') {
+            window.netlifyIdentity.init({ APIUrl: identityApiUrl });
           }
-        }
-        
-        console.log('Netlify Identity loaded successfully');
-        
-        // Identity should already be initialized in the head, but ensure it's initialized
-        if (typeof window.netlifyIdentity.init === 'function' && !window.netlifyIdentity._api) {
-          window.netlifyIdentity.init({
-            APIUrl: '${netlifySiteUrl}/.netlify/identity'
-          });
-        }
-        
-        // Set up the init event handler
-        window.netlifyIdentity.on('init', (user) => {
-          console.log('Identity initialized, user:', user);
-          
-          // If there's an invite token, open the invite modal
-          // Netlify Identity will automatically show the password setup form
-          if (inviteToken && !user) {
-            console.log('Opening invite modal with token:', inviteToken);
-            // Open the invite modal - Netlify Identity will handle the token from the URL
+          // Open the appropriate modal — the widget reads the token from the URL hash
+          if (hasInvite) {
             window.netlifyIdentity.open('invite');
-            return; // Don't proceed with other handlers
-          }
-          
-          // If there's a recovery token, open the recovery modal
-          if (recoveryToken && !user) {
-            console.log('Opening recovery modal');
+          } else {
             window.netlifyIdentity.open('recover');
-            return;
-          }
-          
-          // Handle login redirect
-          if (!user && !inviteToken && !recoveryToken) {
-            window.netlifyIdentity.on('login', () => {
-              document.location.href = adminUrl;
-            });
           }
         });
-        
-        // Also check if identity is already initialized (after init event)
-        // Wait a bit for init to complete, then check
-        setTimeout(() => {
-          try {
-            if (typeof window.netlifyIdentity.currentUser === 'function') {
-              const currentUser = window.netlifyIdentity.currentUser();
-              console.log('Current user check:', currentUser);
-              
-              // If we have a token and no user, open the appropriate modal
-              if (inviteToken && !currentUser) {
-                console.log('Opening invite modal immediately');
-                window.netlifyIdentity.open('invite');
-              } else if (recoveryToken && !currentUser) {
-                console.log('Opening recovery modal immediately');
-                window.netlifyIdentity.open('recover');
-              }
-            }
-          } catch (e) {
-            console.log('Error checking current user:', e);
-          }
-        }, 500);
       }
-      
-      // Start handling identity
-      handleIdentity();
+
+      // After any successful login, redirect to admin
+      waitForIdentity(function() {
+        window.netlifyIdentity.on('login', function() {
+          document.location.href = adminUrl;
+        });
+      });
     </script>
   </body>
 </html>
