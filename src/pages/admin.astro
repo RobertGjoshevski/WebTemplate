@@ -13,12 +13,9 @@ const base = import.meta.env.BASE_URL;
     <!-- Netlify Identity widget - loads from your Netlify site to avoid CORS -->
     <script is:inline src={`${netlifySiteUrl}/.netlify/identity`}></script>
     <script is:inline>
-      // Initialize Netlify Identity with the site URL
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.init({
-          APIUrl: '${netlifySiteUrl}/.netlify/identity'
-        });
-      }
+      // Set API URL before Identity loads
+      window.netlifyIdentity = window.netlifyIdentity || {};
+      window.netlifyIdentity.on = window.netlifyIdentity.on || function() {};
     </script>
   </head>
   <body>
@@ -54,17 +51,29 @@ const base = import.meta.env.BASE_URL;
       console.log('Recovery token:', recoveryToken);
       
       // Wait for Netlify Identity to load and initialize
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds max wait
+      
       function handleIdentity() {
-        if (!window.netlifyIdentity) {
-          console.log('Waiting for Netlify Identity...');
-          setTimeout(handleIdentity, 100);
-          return;
+        attempts++;
+        
+        // Check if Identity widget is loaded (has the open method)
+        if (!window.netlifyIdentity || typeof window.netlifyIdentity.open !== 'function') {
+          if (attempts < maxAttempts) {
+            console.log('Waiting for Netlify Identity...', attempts);
+            setTimeout(handleIdentity, 100);
+            return;
+          } else {
+            console.error('Netlify Identity failed to load after', attempts, 'attempts');
+            alert('Failed to load authentication. Please refresh the page.');
+            return;
+          }
         }
         
-        console.log('Netlify Identity loaded');
+        console.log('Netlify Identity loaded successfully');
         
-        // Initialize Netlify Identity if not already initialized
-        if (!window.netlifyIdentity._api) {
+        // Initialize Netlify Identity with the API URL
+        if (typeof window.netlifyIdentity.init === 'function') {
           window.netlifyIdentity.init({
             APIUrl: '${netlifySiteUrl}/.netlify/identity'
           });
@@ -74,30 +83,19 @@ const base = import.meta.env.BASE_URL;
         window.netlifyIdentity.on('init', (user) => {
           console.log('Identity initialized, user:', user);
           
-          // If there's an invite token, accept it
+          // If there's an invite token, open the invite modal
+          // Netlify Identity will automatically show the password setup form
           if (inviteToken && !user) {
-            console.log('Accepting invite with token:', inviteToken);
-            window.netlifyIdentity.acceptInvite(inviteToken)
-              .then((user) => {
-                console.log('Invite accepted successfully, user:', user);
-                // Clear the hash and reload
-                window.location.hash = '';
-                window.location.reload();
-              })
-              .catch((err) => {
-                console.error('Error accepting invite:', err);
-                alert('Error accepting invitation: ' + (err.message || 'Invalid or expired token. Please request a new invitation.'));
-                // Clear hash anyway
-                window.location.hash = '';
-              });
+            console.log('Opening invite modal with token:', inviteToken);
+            // Open the invite modal - Netlify Identity will handle the token from the URL
+            window.netlifyIdentity.open('invite');
             return; // Don't proceed with other handlers
           }
           
-          // If there's a recovery token, handle password reset
+          // If there's a recovery token, open the recovery modal
           if (recoveryToken && !user) {
-            console.log('Recovery token detected');
-            // Recovery token is handled by Netlify Identity widget automatically
-            // The widget will show password reset form when it detects recovery_token
+            console.log('Opening recovery modal');
+            window.netlifyIdentity.open('recover');
             return;
           }
           
@@ -109,29 +107,21 @@ const base = import.meta.env.BASE_URL;
           }
         });
         
-        // Trigger init event manually if identity is already initialized
-        const currentUser = window.netlifyIdentity.currentUser();
-        if (currentUser !== undefined) {
-          console.log('Identity already initialized, current user:', currentUser);
-          // Trigger the init event manually
-          if (window.netlifyIdentity._handlers && window.netlifyIdentity._handlers.init) {
-            window.netlifyIdentity._handlers.init.forEach(handler => handler(currentUser));
-          }
+        // Also check if identity is already initialized
+        try {
+          const currentUser = window.netlifyIdentity.currentUser();
+          console.log('Current user check:', currentUser);
           
-          // If we have a token and no user, try to accept it
+          // If we have a token and no user, open the appropriate modal
           if (inviteToken && !currentUser) {
-            console.log('Attempting to accept invite...');
-            window.netlifyIdentity.acceptInvite(inviteToken)
-              .then((user) => {
-                console.log('Invite accepted, user:', user);
-                window.location.hash = '';
-                window.location.reload();
-              })
-              .catch((err) => {
-                console.error('Error accepting invite:', err);
-                alert('Error accepting invitation: ' + (err.message || 'Invalid or expired token. Please request a new invitation.'));
-              });
+            console.log('Opening invite modal immediately');
+            window.netlifyIdentity.open('invite');
+          } else if (recoveryToken && !currentUser) {
+            console.log('Opening recovery modal immediately');
+            window.netlifyIdentity.open('recover');
           }
+        } catch (e) {
+          console.log('Error checking current user:', e);
         }
       }
       
