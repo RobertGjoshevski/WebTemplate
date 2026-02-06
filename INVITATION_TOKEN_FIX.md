@@ -2,94 +2,83 @@
 
 ## Problem
 
-Redirection works, but users are shown the login page instead of automatically accepting the invitation. Users don't have passwords yet because they haven't accepted the invitation.
+When clicking invitation links, users are redirected to the login page instead of having their invitation automatically accepted.
 
-## Root Cause
+## Root Causes
 
-The invitation token handling code had issues:
-1. Token extraction wasn't handling all hash formats (`#invite_token=` vs `#/invite_token=`)
-2. Code might run before Netlify Identity is fully initialized
-3. Token extraction logic wasn't robust enough
+1. **URL Format:** The URL has `#/invite_token=...` (with `/` after `#`) instead of `#invite_token=...`
+2. **Netlify Identity Initialization:** The Identity widget needs to be properly initialized before accepting invites
+3. **Token Parsing:** The code wasn't handling the `/` in the hash correctly
 
 ## Solution
 
-I've updated `src/pages/admin.astro` with improved token handling:
+I've updated `src/pages/admin.astro` to:
 
-### Improvements
+1. **Handle both hash formats:**
+   - `#invite_token=...` ✅
+   - `#/invite_token=...` ✅
 
-1. **Better Token Extraction:**
-   - Handles multiple hash formats: `#invite_token=...`, `#/invite_token=...`
-   - More robust parsing that handles edge cases
+2. **Properly initialize Netlify Identity:**
+   - Initialize with the correct API URL
+   - Wait for Identity to fully load before accepting invites
+   - Handle both async and sync initialization scenarios
 
-2. **Proper Initialization:**
-   - Waits for Netlify Identity to fully load before processing tokens
-   - Retries if Identity widget isn't ready yet
-
-3. **Better Error Handling:**
-   - Console logging for debugging
-   - User-friendly error messages
-   - Fallback to opening the invite widget
-
-4. **Multiple Detection Methods:**
-   - Checks both `window.location.hash` and full URL
-   - Handles tokens with or without leading `/` or `#`
-
-## How It Works Now
-
-1. **User clicks invitation link:** `serene-rugelach-9ae7b9.netlify.app/admin/#invite_token=...`
-2. **Redirects to GitHub Pages:** `robertgjoshevski.github.io/WebTemplate/admin/#invite_token=...`
-3. **Admin page loads:**
-   - Extracts token from hash (handles various formats)
-   - Waits for Netlify Identity to initialize
-   - Automatically calls `acceptInvite()` with the token
-4. **User is logged in** and can access the CMS
+3. **Better error handling:**
+   - Show user-friendly error messages
+   - Log detailed information to console for debugging
 
 ## Testing
 
 After deploying:
 
-1. **Send a new invitation** (old ones may have expired)
+1. **Send a new invitation** (old tokens may be expired)
 2. **Click the invitation link**
-3. **Should automatically:**
+3. **Check browser console** for logs:
+   - "Hash: ..."
+   - "Invite token: ..."
+   - "Netlify Identity loaded"
+   - "Identity initialized, user: ..."
+   - "Accepting invite with token: ..."
+   - "Invite accepted successfully"
+
+4. **Should automatically:**
    - Accept the invitation
    - Log the user in
-   - Show the CMS admin panel
+   - Show the admin panel
 
 ## Troubleshooting
 
 **Still showing login page?**
-- Check browser console for errors (F12 → Console)
-- Verify the token is in the URL hash
-- Make sure you're using a **new invitation** (old tokens expire)
+- Check browser console for errors
+- Verify the token isn't expired (tokens expire after 7 days)
+- Send a new invitation
+- Check that Netlify Identity is enabled on your Netlify site
 
 **Console shows "Error accepting invite"?**
-- Token might be expired (send new invitation)
-- Token might be invalid (check it matches the email)
-- Network issue (check browser console)
+- Token may be expired - send a new invitation
+- Check Netlify Identity settings
+- Verify the Netlify site URL is correct in `admin.astro`
 
 **Token not detected?**
 - Check the URL format in the email
-- Verify hash is preserved through redirects
-- Check browser console for token extraction logs
+- Verify the hash contains `invite_token=`
+- Check browser console logs for "Hash:" and "Invite token:" values
 
-## Important Notes
+## Files Changed
 
-- **Invitation tokens expire** - if an old invitation doesn't work, send a new one
-- **First-time users** need to accept invitation before they can log in
-- **After accepting**, users can set a password for future logins
-- The invitation acceptance happens automatically - users shouldn't need to enter a password
+- ✅ `src/pages/admin.astro` - Updated token parsing and Identity initialization
 
 ## Next Steps
 
 1. **Commit and push:**
    ```bash
    git add src/pages/admin.astro
-   git commit -m "Improve invitation token handling and acceptance"
+   git commit -m "Fix invitation token acceptance with proper Identity initialization"
    git push origin main
    ```
 
-2. **Wait for deployment** (GitHub Pages)
+2. **Wait for deployment** (both GitHub Pages and Netlify)
 
 3. **Send a new invitation** and test
 
-4. **Check browser console** if issues persist (F12 → Console tab)
+4. **Check browser console** if issues persist
