@@ -25,14 +25,22 @@ const base = import.meta.env.BASE_URL;
     <script is:inline define:vars={{ base }}>
       // Redirect invitation/recovery tokens from root to admin page
       // This handles email links that go to /#invite_token=... instead of /admin/#invite_token=...
+      // Also handles /WebTemplate/admin paths (GitHub Pages base path)
       if (typeof window !== 'undefined') {
         const hash = window.location.hash;
         const hasInviteToken = hash.includes('invite_token=');
         const hasRecoveryToken = hash.includes('recovery_token=');
+        const currentPath = window.location.pathname;
         
         if (hasInviteToken || hasRecoveryToken) {
-          const adminUrl = base + (base.endsWith('/') ? '' : '/') + 'admin' + hash;
-          window.location.replace(adminUrl);
+          // If we're on /WebTemplate/admin, redirect to /admin (Netlify path)
+          if (currentPath.includes('/WebTemplate/admin')) {
+            window.location.replace('/admin' + hash);
+          } else if (!currentPath.includes('/admin')) {
+            // If we're on root or other path, redirect to /admin
+            const adminUrl = '/admin' + hash;
+            window.location.replace(adminUrl);
+          }
         }
       }
     </script>
