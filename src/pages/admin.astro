@@ -51,21 +51,49 @@ const adminUrl = `${base}/admin/`;
           var gotrue = window.netlifyIdentity.gotrue;
 
           if (isInvite) {
-            gotrue.acceptInvite(token, true)
-              .then(function (response) {
-                document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px">'
-                  + '<h2>Invitation Accepted!</h2>'
-                  + '<p>Your account has been created. You can now log in.</p>'
-                  + '<a href="' + adminUrl + '" style="padding:8px 24px;background:#000;color:#fff;border-radius:6px;text-decoration:none">Go to Admin Panel</a>'
-                  + '</div>';
-              })
-              .catch(function (err) {
-                document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px">'
-                  + '<h2>Error accepting invitation</h2>'
-                  + '<p>' + (err.message || 'The token may be expired. Please request a new invitation.') + '</p>'
-                  + '<a href="' + adminUrl + '" style="padding:8px 24px;background:#000;color:#fff;border-radius:6px;text-decoration:none">Go to Admin Panel</a>'
-                  + '</div>';
-              });
+            // Show a password form — GoTrue acceptInvite requires a password string
+            document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px;max-width:400px;margin:0 auto;padding:20px">'
+              + '<h2 style="margin:0">Accept Invitation</h2>'
+              + '<p style="margin:0;color:#666;text-align:center">Set a password for your new account</p>'
+              + '<form id="invite-form" style="display:flex;flex-direction:column;gap:12px;width:100%">'
+              + '<input id="invite-password" type="password" placeholder="Choose a password" required minlength="6" style="padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:16px" />'
+              + '<input id="invite-password-confirm" type="password" placeholder="Confirm password" required minlength="6" style="padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:16px" />'
+              + '<button type="submit" style="padding:10px 24px;background:#000;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer">Create Account</button>'
+              + '<p id="invite-error" style="color:red;margin:0;display:none"></p>'
+              + '</form>'
+              + '</div>';
+
+            document.getElementById('invite-form').addEventListener('submit', function (e) {
+              e.preventDefault();
+              var pw = document.getElementById('invite-password').value;
+              var pw2 = document.getElementById('invite-password-confirm').value;
+              var errEl = document.getElementById('invite-error');
+
+              if (pw !== pw2) {
+                errEl.textContent = 'Passwords do not match.';
+                errEl.style.display = 'block';
+                return;
+              }
+              if (pw.length < 6) {
+                errEl.textContent = 'Password must be at least 6 characters.';
+                errEl.style.display = 'block';
+                return;
+              }
+              errEl.style.display = 'none';
+
+              gotrue.acceptInvite(token, pw)
+                .then(function () {
+                  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px">'
+                    + '<h2>Account Created!</h2>'
+                    + '<p>You can now log in to the admin panel.</p>'
+                    + '<a href="' + adminUrl + '" style="padding:10px 24px;background:#000;color:#fff;border-radius:6px;text-decoration:none;font-size:16px">Go to Admin Panel</a>'
+                    + '</div>';
+                })
+                .catch(function (err) {
+                  errEl.textContent = err.message || 'Error accepting invitation. The token may be expired.';
+                  errEl.style.display = 'block';
+                });
+            });
           } else {
             // Recovery — open the Identity widget which handles recovery_token natively
             // We need to set the hash so the widget can read it
