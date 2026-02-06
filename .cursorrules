@@ -1,0 +1,53 @@
+# RGsoft Minimalist Tech Stack Rules
+
+## 1. Core Tech Stack
+
+- **Framework:** Astro (static-first, file-based routing, Content Collections)
+- **Styling:** Tailwind CSS (utility-first; use `@astrojs/tailwind` or Tailwind Vite plugin per project)
+- **UI Components:** Shadcn UI (Radix primitives; install with `npx shadcn@latest init`, components in `src/components/ui/`)
+- **CMS:** Decap CMS (Git-based; config in `public/admin/config.yml`)
+- **Auth (CMS):** Netlify Identity + Git Gateway (for editor access; site can be hosted elsewhere)
+
+## 2. Coding Principles ("RGsoft Way")
+
+- **Simplicity first:** Prefer Astro’s native features—file-based routing, Content Collections, zero-JS by default.
+- **No over-engineering:** Use client-side JS/React only when needed (forms, search, drawers). Prefer HTML + CSS in `.astro` for static UI.
+- **Minimalist design:** Clean layout, generous whitespace, strong typography contrast, flat vector-style accents. Avoid visual clutter.
+- **Islands:** Use Astro islands for interactivity. Keep React/JS in dedicated components and hydrate with `client:*` directives (`client:load`, `client:idle`, etc.).
+
+## 3. File Structure
+
+- **Pages:** `src/pages/` (file-based routes; use `src/layouts/` for shared layout wrappers).
+- **Layouts:** `src/layouts/` (e.g. `BaseLayout.astro`, `BlogLayout.astro`).
+- **UI components:** `src/components/ui/` (Shadcn components and shared UI).
+- **Other components:** `src/components/` (feature-specific, non-UI components).
+- **Content:** `src/content/` with collections (e.g. `src/content/blog/`). Define schema in `src/content/config.ts` using `defineCollection()` + Zod.
+- **Global styles:** `src/styles/` (e.g. `global.css` with Tailwind imports). Import once in root layout.
+- **Public assets:** `public/` (favicon, robots.txt, admin config). CMS uploads: `public/images/uploads/`.
+
+## 4. Astro Conventions
+
+- **Content Collections:** Use `getCollection()` / `getEntry()` and typed schemas (Zod) in `src/content/config.ts`. Do not put content as loose files under `src/pages/`.
+- **Component choice:** Prefer `.astro` for static or mostly-static UI. Use `.tsx` (React) only when you need state, context, or rich interactivity (e.g. Shadcn dialogs, forms, search).
+- **Shadcn + Astro:** Use `.tsx` for interactive Shadcn components. In `.astro` files, import and hydrate with a client directive, e.g. `<SomeShadcnComponent client:load />`.
+- **Tailwind:** Ensure `content` in Tailwind config includes all relevant paths (e.g. `./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}`). Prefer utility classes; use scoped `<style>` in Astro only when necessary.
+
+## 5. Decap CMS
+
+- **Config:** All collections, fields, and backend settings in `public/admin/config.yml`. Keep schema in sync with Astro Content Collections (same field names and intent).
+- **Backend:** Use `git-gateway` with `branch: main` (or your default branch). Rely on Netlify Identity for editor auth.
+- **Media:** Set `media_folder` (e.g. `images/uploads`) and `public_folder` (e.g. `/images/uploads`) so uploads live under `public/images/uploads/` and URLs match the built site.
+- **Content:** Use YAML frontmatter in Markdown (title, date, description, thumbnail, etc.) and mirror these fields in `config.yml` and in the Content Collection schema.
+
+## 6. Cursor / Editor Behavior
+
+- **Formatting:** Use Prettier. Run on save or via format command.
+- **Tone:** Be concise and technical in comments and docs.
+- **New Shadcn components:** Add via CLI: `npx shadcn@latest add [component-name]`. Do not hand-write Shadcn primitives unless the design clearly requires it.
+- **New Astro components:** Prefer `.astro`. Add React only when the component needs client-side state or Shadcn-style interactivity.
+
+## 7. Deployment
+
+- **Hosting:** GitHub Pages (or similar static host).
+- **CMS/Auth:** Netlify Identity + Git Gateway (can be on a separate Netlify site or app used only for the CMS).
+- **Builds:** Trigger production builds via GitHub Actions on push to `main` (or your default branch). Ensure the workflow builds the Astro site and deploys the output (e.g. `dist/`) to GitHub Pages.
