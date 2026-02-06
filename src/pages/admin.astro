@@ -125,13 +125,25 @@ const adminUrl = `${base}/admin/`;
       if (!window.__skipDecapCMS) {
         // Set the Netlify site URL in localStorage so the Identity widget
         // (and Decap CMS's own re-initialization) finds the correct endpoint.
-        // The widget reads this key to know which Identity instance to talk to.
         localStorage.setItem('netlifySiteURL', netlifySiteUrl);
 
         // Initialize Identity for Decap CMS (it calls currentUser() on boot)
         (function initForDecap() {
           if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
             window.netlifyIdentity.init({ APIUrl: identityApiUrl });
+
+            // IMPORTANT: Decap CMS re-calls init() without APIUrl, which resets
+            // the widget to use the page's origin. Patch init() to always inject
+            // the correct APIUrl.
+            var originalInit = window.netlifyIdentity.init;
+            window.netlifyIdentity.init = function (opts) {
+              opts = opts || {};
+              if (!opts.APIUrl) {
+                opts.APIUrl = identityApiUrl;
+              }
+              return originalInit.call(window.netlifyIdentity, opts);
+            };
+
             // Redirect after login
             window.netlifyIdentity.on('login', function () {
               document.location.href = adminUrl;
