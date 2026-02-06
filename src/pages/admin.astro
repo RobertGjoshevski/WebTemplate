@@ -121,8 +121,13 @@ const adminUrl = `${base}/admin/`;
       Decap CMS — only loads when there is NO invite/recovery token.
       is:inline prevents Astro from bundling the CDN script.
     -->
-    <script is:inline define:vars={{ identityApiUrl, adminUrl }}>
+    <script is:inline define:vars={{ identityApiUrl, adminUrl, netlifySiteUrl }}>
       if (!window.__skipDecapCMS) {
+        // Set the Netlify site URL in localStorage so the Identity widget
+        // (and Decap CMS's own re-initialization) finds the correct endpoint.
+        // The widget reads this key to know which Identity instance to talk to.
+        localStorage.setItem('netlifySiteURL', netlifySiteUrl);
+
         // Initialize Identity for Decap CMS (it calls currentUser() on boot)
         (function initForDecap() {
           if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
