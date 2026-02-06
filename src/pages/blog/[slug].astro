@@ -1,0 +1,60 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+export async function getStaticPaths() {
+  const blogPosts = await getCollection('blog');
+  return blogPosts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+type Props = {
+  post: CollectionEntry<'blog'>;
+};
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+---
+
+<BaseLayout title={post.data.title} description={post.data.description}>
+  <Header />
+  <main class="flex-1">
+    <article class="container mx-auto px-4 py-16 max-w-3xl">
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold mb-4">{post.data.title}</h1>
+      <p class="text-xl text-muted-foreground mb-4">{post.data.description}</p>
+      <time class="text-sm text-muted-foreground">
+        Published: {post.data.pubDate.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })}
+      </time>
+      {post.data.tags.length > 0 && (
+        <div class="mt-4 flex flex-wrap gap-2">
+          {post.data.tags.map((tag) => (
+            <span class="px-2 py-1 bg-secondary text-secondary-foreground rounded text-sm">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </header>
+    {post.data.heroImage && (
+      <img 
+        src={post.data.heroImage} 
+        alt={post.data.title}
+        class="w-full h-96 object-cover rounded-lg mb-8"
+      />
+    )}
+      <div class="prose prose-neutral dark:prose-invert max-w-none">
+        <Content />
+      </div>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>

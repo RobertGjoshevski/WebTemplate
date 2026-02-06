@@ -1,0 +1,38 @@
+---
+// Admin panel page that loads Decap CMS
+// Note: Decap CMS looks for config.yml relative to the HTML file
+// Since this is served at /admin, it will look for /admin/config.yml
+---
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Manager</title>
+    <!-- Decap CMS script - must load before config -->
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- Netlify Identity widget (optional for local development) -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  </head>
+  <body>
+    <script>
+      // Initialize Decap CMS
+      // It will automatically look for config.yml in /admin/config.yml
+      if (window.DecapCMS) {
+        window.DecapCMS.init();
+      }
+      
+      // Netlify Identity initialization (for production)
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on('init', (user) => {
+          if (!user) {
+            window.netlifyIdentity.on('login', () => {
+              document.location.href = '/admin/';
+            });
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

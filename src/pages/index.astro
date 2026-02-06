@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Hero from '../components/Hero.astro';
+import Features from '../components/Features.astro';
+import BlogList from '../components/BlogList.astro';
+---
+
+<BaseLayout title="RGsoft - Minimalist Static Site Template">
+  <Header />
+  <main class="flex-1">
+    <Hero />
+    <Features />
+    <BlogList />
+  </main>
+  <Footer />
+</BaseLayout>

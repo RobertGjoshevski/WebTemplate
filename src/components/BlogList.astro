@@ -1,0 +1,52 @@
+---
+import { getCollection } from 'astro:content';
+
+const blogPosts = await getCollection('blog', ({ data }) => {
+  return true;
+});
+
+// Sort by date, newest first
+const sortedPosts = blogPosts.sort((a, b) => 
+  b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
+---
+
+<section class="container mx-auto px-4 py-16">
+  <h2 class="text-3xl font-bold text-center mb-12">Latest Posts</h2>
+  {sortedPosts.length > 0 ? (
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {sortedPosts.map((post) => (
+        <article class="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+          {post.data.heroImage && (
+            <img 
+              src={post.data.heroImage} 
+              alt={post.data.title}
+              class="w-full h-48 object-cover"
+            />
+          )}
+          <div class="p-6">
+            <h3 class="text-xl font-semibold mb-2">{post.data.title}</h3>
+            <p class="text-muted-foreground mb-4">{post.data.description}</p>
+            <p class="text-sm text-muted-foreground mb-4">
+              {post.data.pubDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </p>
+            <a 
+              href={`/blog/${post.slug}`}
+              class="text-primary hover:underline font-medium inline-flex items-center gap-1"
+            >
+              Read more →
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+  ) : (
+    <p class="text-center text-muted-foreground">
+      No blog posts yet. Create your first post in the admin panel!
+    </p>
+  )}
+</section>
