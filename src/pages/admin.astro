@@ -13,8 +13,16 @@ const adminUrl = `${base}/admin/`;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager</title>
-    <!-- Netlify Identity Widget from CDN — is:inline prevents Astro from bundling it -->
-    <script is:inline src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <!--
+      NOTE: We intentionally do NOT load the Netlify Identity Widget by default.
+      Decap CMS has a built-in GoTrue client that works with identity_url from
+      config.yml. Loading the external widget causes Decap CMS to re-initialize
+      it without APIUrl, making it default to the page origin (github.io) which
+      has no Identity service. Without the widget, Decap CMS shows its own
+      email/password form and connects directly to the correct endpoint.
+
+      The widget is loaded dynamically only for invite/recovery token handling.
+    -->
   </head>
   <body>
     <!--
@@ -22,7 +30,7 @@ const adminUrl = `${base}/admin/`;
       hash to "#/" which destroys the invite/recovery token.
       If a token is present we handle it here and never load Decap CMS.
     -->
-    <script is:inline define:vars={{ identityApiUrl, adminUrl }}>
+    <script is:inline define:vars={{ identityApiUrl, adminUrl, netlifySiteUrl }}>
       (function () {
         var hash = window.location.hash || '';
         // Handle both #invite_token=... and #/invite_token=...
@@ -34,14 +42,30 @@ const adminUrl = `${base}/admin/`;
         var token = inviteMatch ? inviteMatch[1] : recoveryMatch[1];
         var isInvite = !!inviteMatch;
 
-        // Hide "Loading configuration..." that Decap would show
+        // Show loading state
         document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui">'
           + '<p>' + (isInvite ? 'Accepting invitation…' : 'Loading password reset…') + '</p></div>';
 
-        // Stop the page from loading Decap CMS (we'll set a flag)
+        // Stop the page from loading Decap CMS
         window.__skipDecapCMS = true;
 
-        // Use GoTrue-JS (bundled inside the Identity widget) to accept the invite
+        // Dynamically load the Netlify Identity Widget (only needed for tokens)
+        var widgetScript = document.createElement('script');
+        widgetScript.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+        widgetScript.onload = function () {
+          initAndHandle();
+        };
+        document.head.appendChild(widgetScript);
+
+        function initAndHandle() {
+          if (!window.netlifyIdentity || typeof window.netlifyIdentity.init !== 'function') {
+            setTimeout(initAndHandle, 100);
+            return;
+          }
+          window.netlifyIdentity.init({ APIUrl: identityApiUrl });
+          handleToken();
+        }
+
         function handleToken() {
           if (!window.netlifyIdentity || !window.netlifyIdentity.gotrue) {
             setTimeout(handleToken, 100);
@@ -96,62 +120,24 @@ const adminUrl = `${base}/admin/`;
             });
           } else {
             // Recovery — open the Identity widget which handles recovery_token natively
-            // We need to set the hash so the widget can read it
             window.location.hash = '#recovery_token=' + token;
-            // Initialize and open the widget
             window.netlifyIdentity.init({ APIUrl: identityApiUrl });
             window.netlifyIdentity.open();
           }
         }
-
-        // Initialize Identity widget first, then handle token
-        function initAndHandle() {
-          if (!window.netlifyIdentity || typeof window.netlifyIdentity.init !== 'function') {
-            setTimeout(initAndHandle, 100);
-            return;
-          }
-          window.netlifyIdentity.init({ APIUrl: identityApiUrl });
-          handleToken();
-        }
-        initAndHandle();
       })();
     </script>
 
     <!--
       Decap CMS — only loads when there is NO invite/recovery token.
-      is:inline prevents Astro from bundling the CDN script.
+      Uses built-in GoTrue client (no Identity widget needed).
     -->
-    <script is:inline define:vars={{ identityApiUrl, adminUrl, netlifySiteUrl }}>
+    <script is:inline define:vars={{ netlifySiteUrl }}>
       if (!window.__skipDecapCMS) {
-        // Set the Netlify site URL in localStorage so the Identity widget
-        // (and Decap CMS's own re-initialization) finds the correct endpoint.
+        // Set the Netlify site URL in localStorage so Decap CMS's built-in
+        // GoTrue client knows where to find the Identity endpoint.
+        // The git-gateway backend reads: localStorage.getItem('netlifySiteURL')
         localStorage.setItem('netlifySiteURL', netlifySiteUrl);
-
-        // Initialize Identity for Decap CMS (it calls currentUser() on boot)
-        (function initForDecap() {
-          if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
-            window.netlifyIdentity.init({ APIUrl: identityApiUrl });
-
-            // IMPORTANT: Decap CMS re-calls init() without APIUrl, which resets
-            // the widget to use the page's origin. Patch init() to always inject
-            // the correct APIUrl.
-            var originalInit = window.netlifyIdentity.init;
-            window.netlifyIdentity.init = function (opts) {
-              opts = opts || {};
-              if (!opts.APIUrl) {
-                opts.APIUrl = identityApiUrl;
-              }
-              return originalInit.call(window.netlifyIdentity, opts);
-            };
-
-            // Redirect after login
-            window.netlifyIdentity.on('login', function () {
-              document.location.href = adminUrl;
-            });
-          } else {
-            setTimeout(initForDecap, 50);
-          }
-        })();
 
         // Dynamically load Decap CMS
         var s = document.createElement('script');
