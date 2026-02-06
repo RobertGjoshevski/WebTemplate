@@ -9,6 +9,9 @@ const blogPosts = await getCollection('blog', ({ data }) => {
 const sortedPosts = blogPosts.sort((a, b) => 
   b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
+
+// Use Astro's base URL to handle the /WebTemplate base path
+const base = import.meta.env.BASE_URL;
 ---
 
 <section class="container mx-auto px-4 py-16">
@@ -35,7 +38,7 @@ const sortedPosts = blogPosts.sort((a, b) =>
               })}
             </p>
             <a 
-              href={`/blog/${post.slug}`}
+              href={`${base}/blog/${post.slug}`}
               class="text-primary hover:underline font-medium inline-flex items-center gap-1"
             >
               Read more →

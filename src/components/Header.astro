@@ -1,14 +1,16 @@
 ---
+// Use Astro's base URL to handle the /WebTemplate base path
+const base = import.meta.env.BASE_URL;
 ---
 
 <header class="border-b">
   <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
-    <a href="/" class="text-xl font-bold">
+    <a href={`${base}`} class="text-xl font-bold">
       RGsoft
     </a>
     <div class="flex gap-6">
-      <a href="/" class="hover:text-primary transition-colors">Home</a>
-      <a href="/admin" class="hover:text-primary transition-colors">Admin</a>
+      <a href={`${base}`} class="hover:text-primary transition-colors">Home</a>
+      <a href={`${base}/admin`} class="hover:text-primary transition-colors">Admin</a>
     </div>
   </nav>
 </header>
