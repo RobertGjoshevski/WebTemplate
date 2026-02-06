@@ -1,8 +1,7 @@
 ---
 // Admin panel page that loads Decap CMS
-// IMPORTANT: Replace with your actual Netlify site URL
-// Example: https://your-site-name.netlify.app
 const netlifySiteUrl = 'https://serene-rugelach-9ae7b9.netlify.app';
+const base = import.meta.env.BASE_URL;
 ---
 
 <!DOCTYPE html>
@@ -17,13 +16,49 @@ const netlifySiteUrl = 'https://serene-rugelach-9ae7b9.netlify.app';
   <body>
     <!-- Include the script that builds the page and powers Decap CMS -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-    <script>
+    <script is:inline>
+      // Handle invite and recovery tokens from Netlify Identity
+      const hash = window.location.hash;
+      const inviteToken = hash.includes('invite_token=') 
+        ? hash.split('invite_token=')[1].split('&')[0] 
+        : null;
+      const recoveryToken = hash.includes('recovery_token=') 
+        ? hash.split('recovery_token=')[1].split('&')[0] 
+        : null;
+      
+      const adminUrl = '{base}/admin/';
+      
       // Initialize Netlify Identity
       if (window.netlifyIdentity) {
         window.netlifyIdentity.on('init', (user) => {
-          if (!user) {
+          // If there's an invite token, accept it
+          if (inviteToken && !user) {
+            window.netlifyIdentity.acceptInvite(inviteToken)
+              .then(() => {
+                // Clear the hash and reload
+                window.location.hash = '';
+                window.location.reload();
+              })
+              .catch((err) => {
+                console.error('Error accepting invite:', err);
+                // Clear hash anyway
+                window.location.hash = '';
+              });
+            return; // Don't proceed with other handlers
+          }
+          
+          // If there's a recovery token, handle password reset
+          if (recoveryToken && !user) {
+            // Recovery token is handled by Netlify Identity widget automatically
+            // The widget will show password reset form when it detects recovery_token
+            // Just ensure we stay on this page
+            return;
+          }
+          
+          // Handle login redirect
+          if (!user && !inviteToken && !recoveryToken) {
             window.netlifyIdentity.on('login', () => {
-              document.location.href = '/WebTemplate/admin/';
+              document.location.href = adminUrl;
             });
           }
         });

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Redirecting...</title>
+  <script>
+    // Redirect to GitHub Pages admin panel with any tokens from URL
+    const hash = window.location.hash;
+    const githubPagesUrl = 'https://robertgjoshevski.github.io/WebTemplate/admin';
+
+    if (hash) {
+      // Preserve the hash (invite_token, recovery_token, etc.)
+      window.location.href = githubPagesUrl + hash;
+    } else {
+      // No hash, just redirect to admin
+      window.location.href = githubPagesUrl;
+    }
+  </script>
+</head>
+
+<body>
+  <p>Redirecting to admin panel...</p>
+  <p>If you are not redirected, <a href="https://robertgjoshevski.github.io/WebTemplate/admin">click here</a>.</p>
+</body>
+
+</html>
