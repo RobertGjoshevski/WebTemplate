@@ -6,9 +6,13 @@
   <meta http-equiv="refresh" content="0; url=https://robertgjoshevski.github.io/WebTemplate/admin" />
   <title>Redirecting to Admin Panel...</title>
   <script>
-    // Immediate redirect preserving hash
+    // Immediate redirect preserving hash fragment
+    // Hash fragments (#invite_token=...) are not sent to the server,
+    // so we need client-side JavaScript to preserve them
     const hash = window.location.hash;
     const githubPagesUrl = 'https://robertgjoshevski.github.io/WebTemplate/admin';
+
+    // Use replace instead of href to avoid adding to browser history
     window.location.replace(githubPagesUrl + hash);
   </script>
 </head>

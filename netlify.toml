@@ -1,0 +1,24 @@
+# Netlify configuration file
+# This file configures how Netlify builds and serves your site
+
+[build]
+  # Build command for Astro
+  command = "npm run build"
+  # Publish directory (Astro's output)
+  publish = "dist"
+
+# Redirect rules
+# These redirects happen at the server level before any files are served
+# Note: Server-side redirects don't preserve hash fragments (#invite_token=...)
+# So we redirect to a special redirect page that handles the hash client-side
+[[redirects]]
+  from = "/admin"
+  to = "/admin-redirect.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin-redirect.html"
+  status = 200
+  force = true
