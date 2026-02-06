@@ -13,57 +13,106 @@ const adminUrl = `${base}/admin/`;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager</title>
-    <!-- Netlify Identity Widget from CDN - must use is:inline so Astro doesn't bundle it -->
+    <!-- Netlify Identity Widget from CDN — is:inline prevents Astro from bundling it -->
     <script is:inline src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <!-- Initialize Identity BEFORE Decap CMS loads (Decap calls currentUser() on init) -->
-    <script is:inline define:vars={{ identityApiUrl }}>
-      (function waitAndInit() {
-        if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
-          window.netlifyIdentity.init({ APIUrl: identityApiUrl });
-        } else {
-          setTimeout(waitAndInit, 50);
-        }
-      })();
-    </script>
   </head>
   <body>
-    <!-- Decap CMS - must use is:inline so Astro doesn't bundle it -->
-    <script is:inline src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-    <!-- Handle invite/recovery tokens and login redirect -->
+    <!--
+      Token handler: must run BEFORE Decap CMS, because Decap rewrites the
+      hash to "#/" which destroys the invite/recovery token.
+      If a token is present we handle it here and never load Decap CMS.
+    -->
     <script is:inline define:vars={{ identityApiUrl, adminUrl }}>
-      var hash = window.location.hash;
-      var hasInvite = hash.includes('invite_token=');
-      var hasRecovery = hash.includes('recovery_token=');
+      (function () {
+        var hash = window.location.hash || '';
+        // Handle both #invite_token=... and #/invite_token=...
+        var inviteMatch  = hash.match(/invite_token=([^&]+)/);
+        var recoveryMatch = hash.match(/recovery_token=([^&]+)/);
 
-      function waitForIdentity(cb) {
-        if (window.netlifyIdentity && typeof window.netlifyIdentity.open === 'function') {
-          cb();
-        } else {
-          setTimeout(function() { waitForIdentity(cb); }, 100);
-        }
-      }
+        if (!inviteMatch && !recoveryMatch) return; // no token — let Decap CMS load normally
 
-      if (hasInvite || hasRecovery) {
-        waitForIdentity(function() {
-          // Ensure Identity is initialized
-          if (typeof window.netlifyIdentity.init === 'function') {
-            window.netlifyIdentity.init({ APIUrl: identityApiUrl });
+        var token = inviteMatch ? inviteMatch[1] : recoveryMatch[1];
+        var isInvite = !!inviteMatch;
+
+        // Hide "Loading configuration..." that Decap would show
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui">'
+          + '<p>' + (isInvite ? 'Accepting invitation…' : 'Loading password reset…') + '</p></div>';
+
+        // Stop the page from loading Decap CMS (we'll set a flag)
+        window.__skipDecapCMS = true;
+
+        // Use GoTrue-JS (bundled inside the Identity widget) to accept the invite
+        function handleToken() {
+          if (!window.netlifyIdentity || !window.netlifyIdentity.gotrue) {
+            setTimeout(handleToken, 100);
+            return;
           }
-          // Open the appropriate modal — the widget reads the token from the URL hash
-          if (hasInvite) {
-            window.netlifyIdentity.open('invite');
+
+          var gotrue = window.netlifyIdentity.gotrue;
+
+          if (isInvite) {
+            gotrue.acceptInvite(token, true)
+              .then(function (response) {
+                document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px">'
+                  + '<h2>Invitation Accepted!</h2>'
+                  + '<p>Your account has been created. You can now log in.</p>'
+                  + '<a href="' + adminUrl + '" style="padding:8px 24px;background:#000;color:#fff;border-radius:6px;text-decoration:none">Go to Admin Panel</a>'
+                  + '</div>';
+              })
+              .catch(function (err) {
+                document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px">'
+                  + '<h2>Error accepting invitation</h2>'
+                  + '<p>' + (err.message || 'The token may be expired. Please request a new invitation.') + '</p>'
+                  + '<a href="' + adminUrl + '" style="padding:8px 24px;background:#000;color:#fff;border-radius:6px;text-decoration:none">Go to Admin Panel</a>'
+                  + '</div>';
+              });
           } else {
-            window.netlifyIdentity.open('recover');
+            // Recovery — open the Identity widget which handles recovery_token natively
+            // We need to set the hash so the widget can read it
+            window.location.hash = '#recovery_token=' + token;
+            // Initialize and open the widget
+            window.netlifyIdentity.init({ APIUrl: identityApiUrl });
+            window.netlifyIdentity.open();
           }
-        });
-      }
+        }
 
-      // After any successful login, redirect to admin
-      waitForIdentity(function() {
-        window.netlifyIdentity.on('login', function() {
-          document.location.href = adminUrl;
-        });
-      });
+        // Initialize Identity widget first, then handle token
+        function initAndHandle() {
+          if (!window.netlifyIdentity || typeof window.netlifyIdentity.init !== 'function') {
+            setTimeout(initAndHandle, 100);
+            return;
+          }
+          window.netlifyIdentity.init({ APIUrl: identityApiUrl });
+          handleToken();
+        }
+        initAndHandle();
+      })();
+    </script>
+
+    <!--
+      Decap CMS — only loads when there is NO invite/recovery token.
+      is:inline prevents Astro from bundling the CDN script.
+    -->
+    <script is:inline define:vars={{ identityApiUrl, adminUrl }}>
+      if (!window.__skipDecapCMS) {
+        // Initialize Identity for Decap CMS (it calls currentUser() on boot)
+        (function initForDecap() {
+          if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
+            window.netlifyIdentity.init({ APIUrl: identityApiUrl });
+            // Redirect after login
+            window.netlifyIdentity.on('login', function () {
+              document.location.href = adminUrl;
+            });
+          } else {
+            setTimeout(initForDecap, 50);
+          }
+        })();
+
+        // Dynamically load Decap CMS
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+        document.body.appendChild(s);
+      }
     </script>
   </body>
 </html>
