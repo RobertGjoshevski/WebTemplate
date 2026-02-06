@@ -7,6 +7,7 @@
     "dev:cms": "npx decap-server & astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "prepare:production": "bash scripts/prepare-production.sh",
     "astro": "astro"
   },
   "dependencies": {

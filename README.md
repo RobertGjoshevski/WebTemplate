@@ -112,17 +112,31 @@ Blog posts include:
 
 ## Deployment
 
-### GitHub Pages
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for a complete step-by-step guide.
 
-1. Push your code to a GitHub repository
-2. Set up GitHub Actions workflow to build and deploy
-3. Configure Netlify Identity for CMS authentication
+### Quick Start
 
-### Netlify
+1. **Update `astro.config.mjs`** with your GitHub Pages URL:
+   ```js
+   site: 'https://YOUR_USERNAME.github.io',
+   base: '/YOUR_REPO_NAME',
+   ```
 
-1. Connect your repository to Netlify
-2. Enable Netlify Identity and Git Gateway
-3. Deploy automatically on push
+2. **Push to GitHub:**
+   ```bash
+   git push origin main
+   ```
+
+3. **Enable GitHub Pages:**
+   - Go to repository Settings → Pages
+   - Select "GitHub Actions" as source
+
+4. **Setup Netlify Identity:**
+   - Create a Netlify site (can be separate from hosting)
+   - Enable Identity and Git Gateway
+   - Update `public/admin/config.yml` to remove `local_backend: true`
+
+The GitHub Actions workflow will automatically build and deploy your site!
 
 ## Customization
 
