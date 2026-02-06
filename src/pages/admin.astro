@@ -13,9 +13,21 @@ const base = import.meta.env.BASE_URL;
     <!-- Netlify Identity widget - loads from your Netlify site to avoid CORS -->
     <script is:inline src={`${netlifySiteUrl}/.netlify/identity`}></script>
     <script is:inline>
-      // Set API URL before Identity loads
-      window.netlifyIdentity = window.netlifyIdentity || {};
-      window.netlifyIdentity.on = window.netlifyIdentity.on || function() {};
+      // Initialize Netlify Identity immediately when script loads
+      // This must happen BEFORE Decap CMS loads to prevent errors
+      (function() {
+        function initIdentity() {
+          if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
+            window.netlifyIdentity.init({
+              APIUrl: '${netlifySiteUrl}/.netlify/identity'
+            });
+            console.log('Netlify Identity initialized in head');
+          } else {
+            setTimeout(initIdentity, 50);
+          }
+        }
+        initIdentity();
+      })();
     </script>
   </head>
   <body>
@@ -72,8 +84,8 @@ const base = import.meta.env.BASE_URL;
         
         console.log('Netlify Identity loaded successfully');
         
-        // Initialize Netlify Identity with the API URL
-        if (typeof window.netlifyIdentity.init === 'function') {
+        // Identity should already be initialized in the head, but ensure it's initialized
+        if (typeof window.netlifyIdentity.init === 'function' && !window.netlifyIdentity._api) {
           window.netlifyIdentity.init({
             APIUrl: '${netlifySiteUrl}/.netlify/identity'
           });
@@ -107,22 +119,27 @@ const base = import.meta.env.BASE_URL;
           }
         });
         
-        // Also check if identity is already initialized
-        try {
-          const currentUser = window.netlifyIdentity.currentUser();
-          console.log('Current user check:', currentUser);
-          
-          // If we have a token and no user, open the appropriate modal
-          if (inviteToken && !currentUser) {
-            console.log('Opening invite modal immediately');
-            window.netlifyIdentity.open('invite');
-          } else if (recoveryToken && !currentUser) {
-            console.log('Opening recovery modal immediately');
-            window.netlifyIdentity.open('recover');
+        // Also check if identity is already initialized (after init event)
+        // Wait a bit for init to complete, then check
+        setTimeout(() => {
+          try {
+            if (typeof window.netlifyIdentity.currentUser === 'function') {
+              const currentUser = window.netlifyIdentity.currentUser();
+              console.log('Current user check:', currentUser);
+              
+              // If we have a token and no user, open the appropriate modal
+              if (inviteToken && !currentUser) {
+                console.log('Opening invite modal immediately');
+                window.netlifyIdentity.open('invite');
+              } else if (recoveryToken && !currentUser) {
+                console.log('Opening recovery modal immediately');
+                window.netlifyIdentity.open('recover');
+              }
+            }
+          } catch (e) {
+            console.log('Error checking current user:', e);
           }
-        } catch (e) {
-          console.log('Error checking current user:', e);
-        }
+        }, 500);
       }
       
       // Start handling identity
