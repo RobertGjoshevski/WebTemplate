@@ -1,8 +1,10 @@
 backend:
   name: git-gateway
   branch: main # Branch to update (optional; defaults to master)
-  # Netlify site URL for Git Gateway
+  # Point Identity and Git Gateway to the Netlify site (not the GitHub Pages host)
   site_url: https://serene-rugelach-9ae7b9.netlify.app
+  base_url: https://serene-rugelach-9ae7b9.netlify.app
+  auth_endpoint: .netlify/identity
 
 # Enable local backend for development (no authentication required)
 # Comment out local_backend for production deployment
