@@ -1,75 +1,118 @@
-# Fixing Netlify Identity Invitation Redirect
+# Setting Up Netlify Redirect for Email Links
 
-## Problem
-When users accept Netlify Identity invitations, they're redirected to:
-`https://serene-rugelach-9ae7b9.netlify.app/#invite_token=...`
+## Your Setup
 
-But your site is hosted on GitHub Pages, so this shows an empty page.
+Your Netlify site (`serene-rugelach-9ae7b9.netlify.app`) is connected to the same GitHub repository:
+`https://github.com/RobertGjoshevski/WebTemplate`
 
-## Solution 1: Configure Netlify Identity Site URL (Recommended)
+This means we can add the redirect file directly to your repo!
+
+## What We're Doing
+
+1. **Add redirect file** to your GitHub repo
+2. **Netlify will deploy it** automatically (since it's connected to GitHub)
+3. **Email links** will redirect from Netlify → GitHub Pages
+
+## File Location
+
+The redirect file has been created at:
+```
+public/admin/index.html
+```
+
+This file will be:
+- ✅ Deployed to Netlify at: `serene-rugelach-9ae7b9.netlify.app/admin/`
+- ✅ Available on GitHub Pages (but won't interfere)
+
+## Next Steps
+
+### Step 1: Commit and Push
+
+```bash
+git add public/admin/index.html
+git commit -m "Add Netlify redirect page for admin panel"
+git push origin main
+```
+
+### Step 2: Wait for Netlify to Deploy
 
 1. Go to your Netlify dashboard
-2. Navigate to **Site settings** → **Identity** → **Settings**
-3. Find **Site URL** or **Application URL**
-4. Change it from `https://serene-rugelach-9ae7b9.netlify.app` to:
+2. Check the **Deploys** tab
+3. Wait for the deployment to complete (usually 1-2 minutes)
+
+### Step 3: Update Email Templates in Netlify
+
+1. Go to: **Identity** → **Emails** → **Invitation template**
+2. Click **Configure**
+3. Update "Path to template" to:
    ```
-   https://robertgjoshevski.github.io/WebTemplate/admin
+   {{ .SiteURL }}/admin/#invite_token={{ .Token }}
    ```
-5. Save the settings
+4. Click **Save**
 
-**Result:** New invitations will redirect directly to your GitHub Pages admin panel.
+### Step 4: Verify Recovery Template
 
-## Solution 2: Create Redirect Page on Netlify Site
-
-If Solution 1 doesn't work, create a redirect page on your Netlify site:
-
-1. In your Netlify site, create a file `public/index.html`:
-   ```html
-   <!DOCTYPE html>
-   <html>
-   <head>
-     <script>
-       // Redirect to GitHub Pages admin with invite token
-       const hash = window.location.hash;
-       if (hash.includes('invite_token=')) {
-         window.location.href = 'https://robertgjoshevski.github.io/WebTemplate/admin' + hash;
-       } else {
-         window.location.href = 'https://robertgjoshevski.github.io/WebTemplate/admin';
-       }
-     </script>
-   </head>
-   <body>
-     <p>Redirecting to admin panel...</p>
-   </body>
-   </html>
+1. Go to: **Identity** → **Emails** → **Recovery template**
+2. Verify "Path to template" is:
    ```
+   {{ .SiteURL }}/admin/#recovery_token={{ .Token }}
+   ```
+3. If not, update it and save
 
-2. Deploy this to your Netlify site
+## How It Works
 
-**Result:** Users clicking invitation links will be redirected to GitHub Pages.
-
-## Solution 3: Admin Page Handles Invite Tokens (Already Implemented)
-
-The admin page has been updated to handle invite tokens. If a user manually navigates to:
-`https://robertgjoshevski.github.io/WebTemplate/admin/#invite_token=...`
-
-The admin page will automatically accept the invitation.
-
-## Recommended Approach
-
-**Use Solution 1** - it's the cleanest and ensures all invitations go directly to the right place.
+1. **User clicks email link** → `serene-rugelach-9ae7b9.netlify.app/admin/#invite_token=...`
+2. **Netlify serves** `public/admin/index.html`
+3. **JavaScript redirects** → `robertgjoshevski.github.io/WebTemplate/admin/#invite_token=...`
+4. **GitHub Pages admin page** handles the token automatically
 
 ## Testing
 
-After configuring Solution 1:
-1. Send a new invitation from Netlify Identity
-2. Click the invitation link
-3. It should redirect to: `https://robertgjoshevski.github.io/WebTemplate/admin/#invite_token=...`
-4. The admin page will accept the invitation automatically
+After deploying:
 
-## For Existing Invitations
+1. **Test the redirect:**
+   - Visit: `https://serene-rugelach-9ae7b9.netlify.app/admin`
+   - Should redirect to GitHub Pages admin panel
 
-If you've already sent invitations with the old URL:
-- Users can manually copy the `invite_token` from the Netlify URL
-- Navigate to: `https://robertgjoshevski.github.io/WebTemplate/admin/#invite_token=[token]`
-- The admin page will accept it automatically
+2. **Test with token:**
+   - Visit: `https://serene-rugelach-9ae7b9.netlify.app/admin/#invite_token=test123`
+   - Should redirect to: `https://robertgjoshevski.github.io/WebTemplate/admin/#invite_token=test123`
+
+3. **Send test invitation:**
+   - Send invitation email
+   - Click link → Should redirect to GitHub Pages
+   - Token should be handled automatically
+
+## File Structure
+
+```
+WebTemplate/
+├── public/
+│   ├── admin/
+│   │   ├── index.html          ← NEW: Redirect page for Netlify
+│   │   └── config.yml          ← Decap CMS config
+│   └── config.yml              ← Decap CMS config (root)
+└── src/
+    └── pages/
+        └── admin.astro         ← GitHub Pages admin page
+```
+
+## Important Notes
+
+- The redirect file is in `public/admin/index.html` - this will be served by Netlify
+- Your GitHub Pages admin is at `src/pages/admin.astro` - this is separate
+- Both can coexist without conflict
+- Netlify will serve the `public/` folder contents
+- GitHub Pages will serve the built `dist/` folder (from `src/pages/`)
+
+## Troubleshooting
+
+**Redirect not working?**
+- Check Netlify deploy logs
+- Verify file is at `public/admin/index.html`
+- Test the redirect URL manually
+
+**Still going to Netlify site?**
+- Clear browser cache
+- Check that email templates are updated
+- Verify redirect file is deployed (check Netlify file browser)
