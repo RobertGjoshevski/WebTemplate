@@ -1,8 +1,7 @@
 ---
 // Admin panel page that loads Decap CMS
-// IMPORTANT: Replace YOUR_NETLIFY_SITE_URL with your actual Netlify site URL
+// IMPORTANT: Replace with your actual Netlify site URL
 // Example: https://your-site-name.netlify.app
-// Find this in your Netlify dashboard under your site's URL
 const netlifySiteUrl = 'https://serene-rugelach-9ae7b9.netlify.app';
 ---
 
@@ -12,8 +11,8 @@ const netlifySiteUrl = 'https://serene-rugelach-9ae7b9.netlify.app';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Content Manager</title>
-    <!-- Netlify Identity widget - must load from your Netlify site to avoid CORS -->
-    <script src={`${netlifySiteUrl}/.netlify/identity`}></script>
+    <!-- Netlify Identity widget - loads from your Netlify site to avoid CORS -->
+    <script is:inline src={`${netlifySiteUrl}/.netlify/identity`}></script>
   </head>
   <body>
     <!-- Include the script that builds the page and powers Decap CMS -->

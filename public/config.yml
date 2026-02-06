@@ -1,6 +1,8 @@
 backend:
   name: git-gateway
   branch: main # Branch to update (optional; defaults to master)
+  # Netlify site URL for Git Gateway
+  site_url: https://serene-rugelach-9ae7b9.netlify.app
 
 # Enable local backend for development (no authentication required)
 # Comment out local_backend for production deployment
