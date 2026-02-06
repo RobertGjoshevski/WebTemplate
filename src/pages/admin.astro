@@ -18,29 +18,58 @@ const base = import.meta.env.BASE_URL;
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
     <script is:inline>
       // Handle invite and recovery tokens from Netlify Identity
-      const hash = window.location.hash;
-      const inviteToken = hash.includes('invite_token=') 
-        ? hash.split('invite_token=')[1].split('&')[0] 
-        : null;
-      const recoveryToken = hash.includes('recovery_token=') 
-        ? hash.split('recovery_token=')[1].split('&')[0] 
-        : null;
+      function extractToken(hash, tokenName) {
+        // Handle both #invite_token=... and #/invite_token=... formats
+        const patterns = [
+          tokenName + '=',
+          '/' + tokenName + '=',
+          '#' + tokenName + '=',
+          '#/' + tokenName + '='
+        ];
+        
+        for (const pattern of patterns) {
+          if (hash.includes(pattern)) {
+            const token = hash.split(pattern)[1];
+            if (token) {
+              // Extract token (remove &, #, or end of string)
+              return token.split('&')[0].split('#')[0].split('?')[0];
+            }
+          }
+        }
+        return null;
+      }
+      
+      const hash = window.location.hash || window.location.href.split('#')[1] || '';
+      const inviteToken = extractToken(hash, 'invite_token');
+      const recoveryToken = extractToken(hash, 'recovery_token');
       
       const adminUrl = '{base}/admin/';
       
-      // Initialize Netlify Identity
-      if (window.netlifyIdentity) {
+      // Wait for Netlify Identity to load
+      function handleIdentity() {
+        if (!window.netlifyIdentity) {
+          // Retry after a short delay if not loaded yet
+          setTimeout(handleIdentity, 100);
+          return;
+        }
+        
+        // Initialize Netlify Identity
         window.netlifyIdentity.on('init', (user) => {
+          console.log('Netlify Identity initialized', { user, inviteToken, recoveryToken });
+          
           // If there's an invite token, accept it
           if (inviteToken && !user) {
+            console.log('Accepting invitation with token:', inviteToken);
             window.netlifyIdentity.acceptInvite(inviteToken)
               .then(() => {
+                console.log('Invitation accepted successfully');
                 // Clear the hash and reload
                 window.location.hash = '';
                 window.location.reload();
               })
               .catch((err) => {
                 console.error('Error accepting invite:', err);
+                alert('Error accepting invitation. Please try again or contact the administrator.');
                 // Clear hash anyway
                 window.location.hash = '';
               });
@@ -51,7 +80,7 @@ const base = import.meta.env.BASE_URL;
           if (recoveryToken && !user) {
             // Recovery token is handled by Netlify Identity widget automatically
             // The widget will show password reset form when it detects recovery_token
-            // Just ensure we stay on this page
+            console.log('Recovery token detected, showing password reset form');
             return;
           }
           
@@ -62,7 +91,21 @@ const base = import.meta.env.BASE_URL;
             });
           }
         });
+        
+        // Also try to open the widget if there's a token
+        if (inviteToken || recoveryToken) {
+          // Give it a moment for the widget to initialize
+          setTimeout(() => {
+            if (inviteToken && !window.netlifyIdentity.currentUser()) {
+              console.log('Opening identity widget for invite');
+              window.netlifyIdentity.open('invite');
+            }
+          }, 500);
+        }
       }
+      
+      // Start handling identity
+      handleIdentity();
     </script>
   </body>
 </html>
