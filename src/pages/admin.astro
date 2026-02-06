@@ -10,8 +10,8 @@ const base = import.meta.env.BASE_URL;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Content Manager</title>
-    <!-- Netlify Identity widget - loads from your Netlify site to avoid CORS -->
-    <script is:inline src={`${netlifySiteUrl}/.netlify/identity`}></script>
+    <!-- Netlify Identity widget - load from CDN to avoid CORS issues -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script is:inline>
       // Initialize Netlify Identity immediately when script loads
       // This must happen BEFORE Decap CMS loads to prevent errors
