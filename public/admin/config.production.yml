@@ -6,7 +6,8 @@ backend:
 # local_backend: true
 
 media_folder: public/images/uploads # Must be under public/ so Astro serves them
-public_folder: /WebTemplate/images/uploads # Must match Astro base path for GitHub Pages
+# For GitHub Pages with repo path, use public_folder: /REPO_NAME/images/uploads
+public_folder: /images/uploads
 
 collections:
   - name: 'blog' # Used in routes, e.g., /admin/collections/blog

@@ -7,11 +7,10 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
-  // GitHub Pages configuration
-  // Update site with your GitHub Pages URL (e.g., https://username.github.io/repository-name)
-  // For custom domains, use your domain instead
-  site: 'https://robertgjoshevski.github.io',
-  base: '/WebTemplate',
+  // For new client: set site to your domain (e.g. https://client.com or https://username.github.io)
+  // For GitHub Pages with repo path, set base to '/REPO_NAME'; for root or custom domain use base: '/'
+  site: 'https://your-domain.com',
+  base: '/',
 
   vite: {
     plugins: [tailwindcss()]

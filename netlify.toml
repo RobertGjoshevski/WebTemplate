@@ -12,7 +12,7 @@
 # Note: Server-side redirects don't preserve hash fragments (#invite_token=...)
 # So we redirect to a special redirect page that handles the hash client-side
 
-# Handle /admin paths (correct Netlify URL)
+# Handle /admin paths
 [[redirects]]
   from = "/admin"
   to = "/admin-redirect.html"
@@ -25,15 +25,4 @@
   status = 200
   force = true
 
-# Handle /WebTemplate/admin paths (GitHub Pages base path - redirect to /admin)
-[[redirects]]
-  from = "/WebTemplate/admin"
-  to = "/admin-redirect.html"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/WebTemplate/admin/*"
-  to = "/admin-redirect.html"
-  status = 200
-  force = true
+# For GitHub Pages with repo path: add redirects from /REPO_NAME/admin and /REPO_NAME/admin/* to /admin-redirect.html

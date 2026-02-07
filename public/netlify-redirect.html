@@ -5,23 +5,20 @@
   <meta charset="utf-8" />
   <title>Redirecting...</title>
   <script>
-    // Redirect to GitHub Pages admin panel with any tokens from URL
+    // For new client: replace with your site URL
     const hash = window.location.hash;
-    const githubPagesUrl = 'https://robertgjoshevski.github.io/WebTemplate/admin';
-
+    const adminPanelUrl = 'https://your-domain.com/admin';
     if (hash) {
-      // Preserve the hash (invite_token, recovery_token, etc.)
-      window.location.href = githubPagesUrl + hash;
+      window.location.href = adminPanelUrl + hash;
     } else {
-      // No hash, just redirect to admin
-      window.location.href = githubPagesUrl;
+      window.location.href = adminPanelUrl;
     }
   </script>
 </head>
 
 <body>
   <p>Redirecting to admin panel...</p>
-  <p>If you are not redirected, <a href="https://robertgjoshevski.github.io/WebTemplate/admin">click here</a>.</p>
+  <p>If you are not redirected, <a href="https://your-domain.com/admin">click here</a>.</p>
 </body>
 
 </html>

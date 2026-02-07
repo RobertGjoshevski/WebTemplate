@@ -2,15 +2,17 @@ backend:
   name: git-gateway
   branch: main # Branch to update (optional; defaults to master)
   # Point Identity and Git Gateway to the Netlify site (not the GitHub Pages host)
-  identity_url: https://serene-rugelach-9ae7b9.netlify.app/.netlify/identity
-  gateway_url: https://serene-rugelach-9ae7b9.netlify.app/.netlify/git
+  # For new client: replace with your Netlify site URL
+  identity_url: https://YOUR_NETLIFY_SITE.netlify.app/.netlify/identity
+  gateway_url: https://YOUR_NETLIFY_SITE.netlify.app/.netlify/git
 
 # Enable local backend for development (no authentication required)
 # Comment out local_backend for production deployment
 # local_backend: true
 
 media_folder: public/images/uploads # Must be under public/ so Astro serves them
-public_folder: /WebTemplate/images/uploads # The src attribute for uploaded media will begin with /WebTemplate/images/uploads
+# For GitHub Pages with repo path, use public_folder: /REPO_NAME/images/uploads
+public_folder: /images/uploads
 
 collections:
   - name: 'blog' # Used in routes, e.g., /admin/collections/blog

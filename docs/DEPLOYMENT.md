@@ -8,6 +8,19 @@ This guide will walk you through deploying your static site to GitHub Pages and 
 - A Netlify account (free tier works)
 - Your repository pushed to GitHub
 
+## New client checklist
+
+When using this template as the starting point for a new client site, update:
+
+1. **Project identity:** `package.json` — `name`, `version`
+2. **Site URL and base:** `astro.config.mjs` — `site`, `base` (use `base: '/'` for root or custom domain; use `base: '/REPO_NAME'` for GitHub Pages with repo path)
+3. **Branding:** `src/pages/index.astro`, `src/layouts/BaseLayout.astro`, `src/components/Header.astro`, `src/components/Hero.astro`, `src/components/Footer.astro` — company name, tagline, contact, social links
+4. **CMS and Netlify:** Create a Netlify site for the client; then update `public/admin/config.yml`, `public/admin/config.production.yml`, `public/config.yml`, and `src/pages/admin.astro` — `identity_url`, `gateway_url`, `public_folder`, `netlifySiteUrl`
+5. **Admin redirect URLs:** `public/admin-redirect.html`, `public/admin/index.html`, `public/netlify-redirect.html` — replace `your-domain.com` with the client’s site URL
+6. **Base path (if used):** `src/layouts/BaseLayout.astro` (inline script), `netlify.toml` — add redirects for `/REPO_NAME/admin` if using GitHub Pages with a repo path
+7. **Content:** Replace or remove sample files in `src/content/blog/` and `src/content/features/`; add client content or leave empty for CMS
+8. **Assets:** Replace `public/favicon.ico` and `public/favicon.svg`; clear or replace `public/images/uploads/` as needed
+
 ## Part 1: Deploy to GitHub Pages
 
 ### Step 1: Update Astro Configuration
