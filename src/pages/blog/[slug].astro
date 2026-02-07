@@ -29,13 +29,12 @@ const { post } = Astro.props;
 const { Content } = await post.render();
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description}>
+<BaseLayout title={post.data.title} description={post.data.title}>
   <Header />
   <main class="flex-1">
     <article class="container mx-auto px-4 py-16 max-w-3xl">
     <header class="mb-8">
       <h1 class="text-4xl font-bold mb-4">{post.data.title}</h1>
-      <p class="text-xl text-muted-foreground mb-4">{post.data.description}</p>
       <time class="text-sm text-muted-foreground">
         Published: {post.data.pubDate.toLocaleDateString('en-US', {
           year: 'numeric',

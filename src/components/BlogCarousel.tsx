@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils"
 export interface PostItem {
   slug: string
   title: string
-  description: string
   heroImage: string | null
   pubDate: string
 }

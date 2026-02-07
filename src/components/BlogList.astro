@@ -26,7 +26,6 @@ function resolveImageSrc(src: string): string {
 const carouselPosts = sortedPosts.map((post) => ({
   slug: post.slug,
   title: post.data.title,
-  description: post.data.description,
   heroImage: post.data.heroImage ? resolveImageSrc(post.data.heroImage) : null,
   pubDate: post.data.pubDate.toISOString(),
 }));
