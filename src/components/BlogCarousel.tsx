@@ -52,7 +52,6 @@ export function BlogCarousel({ posts, base, className }: BlogCarouselProps) {
             )}
             <div className="p-6">
               <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
-              <p className="text-muted-foreground mb-4 line-clamp-2">{post.description}</p>
               <p className="text-sm text-muted-foreground mb-4">
                 {new Date(post.pubDate).toLocaleDateString("en-US", {
                   year: "numeric",
