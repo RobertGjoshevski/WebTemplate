@@ -31,8 +31,8 @@ const carouselPosts = sortedPosts.map((post) => ({
 }));
 ---
 
-<section class="container mx-auto px-4 py-16">
-  <h2 class="text-3xl font-bold text-center mb-12">Latest Posts</h2>
+<section id="blog" class="container mx-auto px-4 py-16">
+  <h2 class="text-3xl font-bold text-center mb-12">Posts</h2>
   {sortedPosts.length > 0 ? (
     <BlogCarousel client:load posts={carouselPosts} base={base} />
   ) : (
