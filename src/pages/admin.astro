@@ -57,28 +57,33 @@ const adminUrl = `${base}/admin/`;
     </a>
     <div id="nc-root"></div>
     <style is:global>
-      body { padding-top: 2.75rem; }
+      body { margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+      /* Back link is first in column (document flow), not overlay */
       .admin-back-link {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 9999;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.25rem;
+        height: 48px;
+        padding: 0 1.25rem;
         background: #1a1a1a;
         color: #fff;
         text-decoration: none;
-        font-family: system-ui, sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
         font-size: 0.875rem;
         font-weight: 500;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
       }
       .admin-back-link:hover {
-        background: #2a2a2a;
+        background: #252525;
         color: #fff;
+      }
+      #nc-root {
+        flex: 1;
+        box-sizing: border-box;
+        min-height: 0;
+      }
+      #nc-root > * {
+        box-sizing: border-box;
       }
     </style>
     <!--
