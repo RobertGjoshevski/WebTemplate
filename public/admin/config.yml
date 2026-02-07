@@ -24,7 +24,11 @@ collections:
       - { label: 'Updated Date', name: 'updatedDate', widget: 'datetime', required: false }
       - { label: 'Hero Image', name: 'heroImage', widget: 'image', required: false }
       - { label: 'Tags', name: 'tags', widget: 'list', default: [] }
-      - { label: 'Body', name: 'body', widget: 'markdown' }
+      - label: 'Body'
+        name: 'body'
+        widget: 'markdown'
+        modes: ['rich_text']
+        buttons: ['bold', 'italic', 'code', 'link', 'heading-two', 'heading-three', 'quote', 'bulleted-list', 'numbered-list']
 
   - name: 'features'
     label: 'Features'
@@ -38,5 +42,5 @@ collections:
       - label: 'Body'
         name: 'body'
         widget: 'markdown'
-        modes: ['rich_text', 'raw']
+        modes: ['rich_text']
         buttons: ['bold', 'italic', 'code', 'link', 'heading-two', 'heading-three', 'quote', 'bulleted-list', 'numbered-list']

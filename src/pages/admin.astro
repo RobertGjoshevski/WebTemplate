@@ -13,13 +13,10 @@ const adminUrl = `${base}/admin/`;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager</title>
-    <!-- Override Decap login: hide logo, image, "Decap" text; plain text inputs only -->
+    <!-- Override Decap login: hide logo area and "Decap" text; plain text inputs only.
+         We do NOT hide svg/img globally so the markdown toolbar buttons (bold, italic, etc.) stay visible. -->
     <style is:global>
-      #nc-root img,
-      #nc-root svg,
-      #nc-root [class*="Icon"] {
-        display: none !important;
-      }
+      /* Hide only the login-screen logo area (first section child), not editor toolbars */
       #nc-root section > div:first-child {
         display: none !important;
       }
@@ -84,6 +81,10 @@ const adminUrl = `${base}/admin/`;
       }
       #nc-root > * {
         box-sizing: border-box;
+      }
+      /* Decap CMS editor toolbar: reduce height from 66px to 50px */
+      #nc-root [class*="ToolbarContainer"] {
+        height: 50px !important;
       }
     </style>
     <!--
@@ -205,7 +206,7 @@ const adminUrl = `${base}/admin/`;
 
         // Dynamically load Decap CMS
         var s = document.createElement('script');
-        s.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+        s.src = 'https://unpkg.com/decap-cms@3.0.0/dist/decap-cms.js';
         document.body.appendChild(s);
 
         (function hideDecapBranding() {
