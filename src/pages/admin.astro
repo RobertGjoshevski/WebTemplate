@@ -25,12 +25,44 @@ const adminUrl = `${base}/admin/`;
     -->
   </head>
   <body>
+    <a
+      href={base || '/'}
+      class="admin-back-link"
+      aria-label="Back to website"
+    >
+      ← Back to website
+    </a>
+    <style is:global>
+      body { padding-top: 2.75rem; }
+      .admin-back-link {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: #1a1a1a;
+        color: #fff;
+        text-decoration: none;
+        font-family: system-ui, sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      .admin-back-link:hover {
+        background: #2a2a2a;
+        color: #fff;
+      }
+    </style>
     <!--
       Token handler: must run BEFORE Decap CMS, because Decap rewrites the
       hash to "#/" which destroys the invite/recovery token.
       If a token is present we handle it here and never load Decap CMS.
     -->
-    <script is:inline define:vars={{ identityApiUrl, adminUrl, netlifySiteUrl }}>
+    <script is:inline define:vars={{ identityApiUrl, adminUrl, netlifySiteUrl, base }}>
       (function () {
         var hash = window.location.hash || '';
         // Handle both #invite_token=... and #/invite_token=...
@@ -43,7 +75,8 @@ const adminUrl = `${base}/admin/`;
         var isInvite = !!inviteMatch;
 
         // Show loading state
-        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui">'
+        document.body.innerHTML = '<a href="' + (base || '/') + '" style="position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;padding:0.75rem 1.25rem;background:#1a1a1a;color:#fff;text-decoration:none;font-family:system-ui;font-size:0.875rem">← Back to website</a>'
+          + '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui">'
           + '<p>' + (isInvite ? 'Accepting invitation…' : 'Loading password reset…') + '</p></div>';
 
         // Stop the page from loading Decap CMS
@@ -76,7 +109,8 @@ const adminUrl = `${base}/admin/`;
 
           if (isInvite) {
             // Show a password form — GoTrue acceptInvite requires a password string
-            document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px;max-width:400px;margin:0 auto;padding:20px">'
+            document.body.innerHTML = '<a href="' + (base || '/') + '" style="position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;padding:0.75rem 1.25rem;background:#1a1a1a;color:#fff;text-decoration:none;font-family:system-ui;font-size:0.875rem">← Back to website</a>'
+              + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;gap:16px;max-width:400px;margin:0 auto;padding:20px;padding-top:4rem">'
               + '<h2 style="margin:0">Accept Invitation</h2>'
               + '<p style="margin:0;color:#666;text-align:center">Set a password for your new account</p>'
               + '<form id="invite-form" style="display:flex;flex-direction:column;gap:12px;width:100%">'
@@ -107,7 +141,8 @@ const adminUrl = `${base}/admin/`;
 
               gotrue.acceptInvite(token, pw)
                 .then(function () {
-                  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:16px">'
+                  document.body.innerHTML = '<a href="' + (base || '/') + '" style="position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;padding:0.75rem 1.25rem;background:#1a1a1a;color:#fff;text-decoration:none;font-family:system-ui;font-size:0.875rem">← Back to website</a>'
+                    + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;gap:16px;padding-top:4rem">'
                     + '<h2>Account Created!</h2>'
                     + '<p>You can now log in to the admin panel.</p>'
                     + '<a href="' + adminUrl + '" style="padding:10px 24px;background:#000;color:#fff;border-radius:6px;text-decoration:none;font-size:16px">Go to Admin Panel</a>'
