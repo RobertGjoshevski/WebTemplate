@@ -34,6 +34,8 @@ npm run dev
 
 Visit `http://localhost:4321` to see your site.
 
+**Content source:** The site always loads blog posts from `src/content/blog/` (the same files committed to the repo). Local and production use the same source—no separate "live" API. To see the latest posts committed via the admin panel (e.g. from another editor or machine), run `git pull` before `npm run dev`.
+
 ### Admin Panel
 
 Access the content management panel at `http://localhost:4321/admin`.

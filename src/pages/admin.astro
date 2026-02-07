@@ -13,6 +13,29 @@ const adminUrl = `${base}/admin/`;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager</title>
+    <!-- Override Decap login: hide logo, image, "Decap" text; plain text inputs only -->
+    <style is:global>
+      #nc-root img,
+      #nc-root svg,
+      #nc-root [class*="Icon"] {
+        display: none !important;
+      }
+      #nc-root section > div:first-child {
+        display: none !important;
+      }
+      #nc-root a[href*="site"],
+      #nc-root a[href*="Site"] {
+        display: none !important;
+      }
+      #nc-root input {
+        padding: 10px 14px !important;
+        border: 1px solid #ccc !important;
+        border-radius: 6px !important;
+        font-size: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+    </style>
     <!--
       NOTE: We intentionally do NOT load the Netlify Identity Widget by default.
       Decap CMS has a built-in GoTrue client that works with identity_url from
@@ -32,6 +55,7 @@ const adminUrl = `${base}/admin/`;
     >
       ← Back to website
     </a>
+    <div id="nc-root"></div>
     <style is:global>
       body { padding-top: 2.75rem; }
       .admin-back-link {
@@ -178,6 +202,25 @@ const adminUrl = `${base}/admin/`;
         var s = document.createElement('script');
         s.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
         document.body.appendChild(s);
+
+        (function hideDecapBranding() {
+          function run() {
+            var root = document.getElementById('nc-root');
+            if (!root) return;
+            root.querySelectorAll('*').forEach(function (el) {
+              if (el.children.length) return;
+              var text = (el.textContent || '').trim();
+              if (text === 'Decap' || text === 'Decap CMS' || text.indexOf('Decap') === 0) {
+                el.style.setProperty('display', 'none', 'important');
+              }
+            });
+          }
+          setTimeout(run, 500);
+          setTimeout(run, 1500);
+          var obs = new MutationObserver(run);
+          obs.observe(document.body, { childList: true, subtree: true });
+          setTimeout(function () { obs.disconnect(); }, 5000);
+        })();
       }
     </script>
   </body>
